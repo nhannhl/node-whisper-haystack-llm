@@ -21,13 +21,13 @@ docker compose up -d
 ## Stack
 
 - **Speech Recognition**
-- - Using openai/whisper with https://huggingface.co/ggerganov/whisper.cpp
-- - Run docker image onerahmet/openai-whisper-asr-webservice for webservice
+  - Using openai/whisper with https://huggingface.co/ggerganov/whisper.cpp
+  - Run docker image onerahmet/openai-whisper-asr-webservice for webservice
 
 - **LLM Integration**
-- - llama.cpp server (REST API) — local run with LLM (ghcr.io/ggerganov/llama.cpp:server)
-- - Get model from https://huggingface.co/bartowski (Instruct)
-- - Model using "Meta-Llama-3.1-8B-Instruct-Q4_K_M"
+  - llama.cpp server (REST API) — local run with LLM (ghcr.io/ggerganov/llama.cpp:server)
+  - Get model from https://huggingface.co/bartowski (Instruct)
+  - Model using "Meta-Llama-3.1-8B-Instruct-Q4_K_M"
 
 - **Get youtube**
-- - Using yt-dlp ffmpeg lib
+  - Using yt-dlp ffmpeg lib
