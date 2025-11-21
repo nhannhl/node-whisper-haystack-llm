@@ -1,0 +1,32 @@
+import axios from "axios";
+import fs from "fs";
+import FormData from "form-data";
+
+const WHISPER_URL = process.env.WHISPER_SERVICE_URL || "http://whisper:9000";
+
+export async function sendToWhisper(filePath) {
+  console.log("[Whisper] Start");
+  console.time("whisper");
+
+  const form = new FormData();
+  form.append("audio_file", fs.createReadStream(filePath));
+
+  const url = `${WHISPER_URL}/asr?task=transcribe&language=vi`;
+  const response = await axios.post(url, form, {
+    headers: form.getHeaders(),
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity
+  });
+
+  console.timeEnd("whisper");
+  console.log("[Whisper] Raw:", response.data);
+
+  const data = response.data;
+
+  if (data.text) return data.text;
+  if (data.transcription) return data.transcription;
+  if (data.result?.text) return data.result.text;
+  if (typeof data === "string") return data;
+
+  throw new Error("Whisper returned unexpected format: " + JSON.stringify(data));
+}

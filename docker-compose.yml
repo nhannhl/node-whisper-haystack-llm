@@ -1,0 +1,68 @@
+services:
+  llama:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: llama
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models
+    command:
+      - "--model"
+      - "/models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+      - "--port"
+      - "8080"
+      - "--host"
+      - "0.0.0.0"
+      - "--ctx-size"
+      - "4096"
+      - "--threads"
+      - "6"
+      - "--parallel"
+      - "1"
+      - "--batch-size"
+      - "64"
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice@sha256:03b402335881cdab2e4939b24620809df8d6ceec3bf2712217d41c8761a0f5d4
+    container_name: whisper
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - WHISPER_ASR_ENGINE=whisper-cpp
+      - WHISPER_CPP_MODEL=base-q8_1
+      - WHISPER_THREADS=6
+      - WHISPER_CPP_BEAM_SIZE=1
+      - WHISPER_CPP_MAX_CONTEXT=2048
+
+  api:
+    build: ./api
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - llama
+      - whisper
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    env_file:
+      - ./api/.env
+    command: ["npm", "run", "dev"]
+
+  front:
+    build: ./front
+    container_name: front
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    env_file:
+      - ./front/.env
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
