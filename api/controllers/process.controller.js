@@ -1,5 +1,9 @@
 import path from "path";
-import { downloadWithYtDlp, downloadSubtitleWithYtDlp, downloadAudioWithYtDlp } from "../services/yt.service.js";
+import fs from "fs";
+import {
+  downloadSubtitleWithYtDlp,
+  downloadAudioWithYtDlp,
+} from "../services/yt.service.js";
 import { sendToWhisper } from "../services/whisper.service.js";
 import { callLlama } from "../services/llama.service.js";
 import { safeUnlink } from "../utils/file.util.js";
@@ -17,27 +21,25 @@ export async function processHandler(req, res) {
     if (type === "url" && url) {
       const id = url.match(/v=([^&]+)/)?.[1] || "video";
 
-      subFile = path.join(UPLOAD_DIR, `${id}-${Date.now()}.vtt`);
+      const subFileBase = path.join(UPLOAD_DIR, `${id}-${Date.now()}`);
       try {
-        await downloadSubtitleWithYtDlp(url, subFile);
+        await downloadSubtitleWithYtDlp(url, subFileBase);
+        subFile = `${subFileBase}.en.vtt`;
 
         if (fs.existsSync(subFile)) {
           console.log("[YT] Subtitle found — skipping Whisper!");
 
           const subtitleText = fs.readFileSync(subFile, "utf8");
-
           const summary = await callLlama(subtitleText);
 
           return res.json({
             summary,
             original_length: subtitleText.length,
-            source: "subtitle"
+            source: "subtitle",
           });
         }
       } catch (e) {
         console.log("[YT] No subtitle found. Fallback to Whisper.");
-      } finally {
-        if (subFile) await safeUnlink(subFile);
       }
 
       // tempFile = path.join(UPLOAD_DIR, `${id}-${Date.now()}.mp4`);
@@ -69,14 +71,12 @@ export async function processHandler(req, res) {
     }
 
     return res.status(400).json({ error: "Invalid request" });
-
   } catch (err) {
     console.error("PROCESS ERROR:", err);
     return res.status(500).json({
       error: "Processing failed",
-      detail: err.message
+      detail: err.message,
     });
-
   } finally {
     if (tempFile) await safeUnlink(tempFile);
     if (subFile) await safeUnlink(subFile);
