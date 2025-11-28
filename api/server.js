@@ -2,9 +2,10 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import processRoute from "./routes/process.route.js";
+import routes from "./routes/index.js";
 import fs from "fs";
 import path from "path";
+import { initializeCollection } from "./services/qdrant_vector_db.service.js";
 
 dotenv.config();
 
@@ -19,6 +20,24 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(morgan("tiny"));
 
-app.use("/", processRoute);
+app.use("/", routes);
 
-app.listen(PORT, () => console.log("API RUNNING on port", PORT));
+async function startServer() {
+  console.log(" Initializing Qdrant collection…");
+
+  try {
+    await initializeCollection();
+    console.log("Qdrant collection ready.");
+
+    app.listen(PORT, () => {
+      console.log(`API RUNNING on port ${PORT}`);
+    });
+
+  } catch (err) {
+    console.error("Failed to initialize Qdrant!", err.message);
+
+    process.exit(1);
+  }
+}
+
+startServer();

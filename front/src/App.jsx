@@ -9,13 +9,19 @@ function App() {
     'text': 'Text',
     'file': 'File Upload'
   };
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_SUMMARIZE_URL = import.meta.env.VITE_API_SUMMARIZE_URL;
+  const API_RAG_URL = import.meta.env.VITE_API_RAG_URL;
   const [type, setType] = useState('url');
   const [inputValue, setInputValue] = useState(''); 
   const [selectedFile, setSelectedFile] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [qaInput, setQaInput] = useState("");
+  const [qaAnswer, setQaAnswer] = useState(null);
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaError, setQaError] = useState(null);
+  const [qaContext, setQaContext] = useState([]);
 
   useEffect(() => {
     setInputValue('');
@@ -36,7 +42,7 @@ function App() {
         if (!inputValue) {
           throw new Error("Please enter a URL.");
         }
-        response = await axios.post(API_URL, {
+        response = await axios.post(API_SUMMARIZE_URL, {
           type: 'url',
           url: inputValue,
         });
@@ -44,7 +50,7 @@ function App() {
         if (!inputValue) {
           throw new Error("Please enter some text.");
         }
-        response = await axios.post(API_URL, {
+        response = await axios.post(API_SUMMARIZE_URL, {
           type: 'lyrics',
           content: inputValue,
         });
@@ -56,7 +62,7 @@ function App() {
         formData.append('type', 'video');
         formData.append('video', selectedFile);
 
-        response = await axios.post(API_URL, formData, {
+        response = await axios.post(API_SUMMARIZE_URL, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
@@ -72,6 +78,34 @@ function App() {
       setLoading(false);
     }
   };
+
+  const handleRagQuery = async () => {
+    setQaLoading(true);
+    setQaError(null);
+    setQaAnswer(null);
+
+    try {
+      const response = await axios.post(`${API_RAG_URL}`, {
+        question: qaInput,
+      });
+
+      setQaAnswer(response.data.answer);
+      setQaContext(response.data.context_chunks || []);
+    } catch (err) {
+      setQaError(err.response?.data?.error || err.message);
+    } finally {
+      setQaLoading(false);
+    }
+  };
+
+  const highlightContext = (text, keyword) => {
+    if (!keyword) return text;
+
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(escaped, "gi");
+
+    return text.replace(regex, (match) => `<mark>${match}</mark>`);
+  }
 
   return (
     <>
@@ -109,6 +143,57 @@ function App() {
           <p>{summary}</p>
         </div>
       )}
+      {/* ===================== RAG Q/A Section ===================== */}
+      <div className="rag-card">
+        <h2>Ask a Question (RAG)</h2>
+
+        <textarea
+          value={qaInput}
+          onChange={(e) => setQaInput(e.target.value)}
+          placeholder="Ask anything about the processed transcript…"
+        ></textarea>
+
+        <button
+          onClick={handleRagQuery}
+          disabled={qaLoading || !summary}
+          className={!summary ? "disabled-btn" : ""}
+        >
+          {qaLoading ? "Searching…" : "Ask"}
+        </button>
+
+        {qaError && <div className="rag-error">Error: {qaError}</div>}
+
+        {qaAnswer && (
+          <div className="rag-answer">
+            <h3>Answer</h3>
+            <p>{qaAnswer}</p>
+          </div>
+        )}
+
+        {qaContext.length > 0 && (
+          <div className="rag-context">
+            <h3>Context Used</h3>
+
+            {qaContext.map((ctx, index) => (
+              <div key={ctx.id} className="rag-chunk">
+                <div className="rag-chunk-header">
+                  <span>Chunk #{index + 1}</span>
+                  <span className="score">Score: {ctx.score.toFixed(3)}</span>
+                </div>
+
+                <p
+                  className="rag-chunk-text"
+                  dangerouslySetInnerHTML={{
+                    __html: highlightContext(ctx.content, qaInput),
+                  }}
+                ></p>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+
     </>
   )
 }

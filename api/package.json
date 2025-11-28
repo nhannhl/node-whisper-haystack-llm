@@ -18,7 +18,9 @@
     "form-data": "^4.0.0",
     "multer": "^1.4.5-lts.1",
     "morgan": "^1.10.0",
-    "ytdl-core": "^4.11.1"
+    "ytdl-core": "^4.11.1",
+    "@qdrant/js-client-rest": "^1.8.1",
+    "@dqbd/tiktoken": "^1.0.22"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
