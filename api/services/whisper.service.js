@@ -4,6 +4,11 @@ import FormData from "form-data";
 
 const WHISPER_URL = process.env.WHISPER_SERVICE_URL || "http://whisper:9000";
 
+/**
+ * Sends an audio file to the Whisper service for transcription.
+ * @param {string} filePath - The path to the audio file
+ * @returns {string} - The transcribed text
+ */
 export async function sendToWhisper(filePath) {
   console.log("[Whisper] Start");
   console.time("whisper");

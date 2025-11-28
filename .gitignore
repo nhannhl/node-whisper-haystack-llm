@@ -1,1 +1,4 @@
 models/*
+hf_models/*
+qdrant_storage/*
+uploads/*

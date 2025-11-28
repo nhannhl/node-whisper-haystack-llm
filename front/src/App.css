@@ -77,3 +77,113 @@
 .summary-result p {
   white-space: pre-wrap;
 }
+
+/* =============================
+   RAG Ask Section
+============================= */
+
+.rag-card {
+  padding: 2em;
+  margin-top: 1.5em;
+  background-color: #f3f4ff; /* nhẹ, không trùng summary green */
+  border: 1px solid #5865f2; /* xanh tím Discord nhẹ */
+  border-radius: 6px;
+  text-align: left;
+}
+
+.rag-card h2 {
+  margin-top: 0;
+  color: #303f9f;
+}
+
+.rag-card textarea {
+  width: 100%;
+  min-height: 120px;
+  font-size: 1.1em;
+  padding: 0.7em;
+  border-radius: 4px;
+  border: 1px solid #9fa8da;
+  resize: vertical;
+}
+
+.rag-card button {
+  margin-top: 1em;
+  padding: 0.6em 1.2em;
+  font-size: 1.1em;
+  background-color: #3f51b5;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.rag-card button:hover {
+  background-color: #5c6bc0;
+}
+
+.rag-answer {
+  margin-top: 1.5em;
+  padding: 1.2em;
+  border: 1px solid #3f51b5;
+  background-color: #e8eaf6;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+
+.rag-answer h3 {
+  margin-top: 0;
+  color: #1a237e;
+}
+
+.rag-error {
+  margin-top: 1em;
+  color: #d50000;
+  border: 1px solid #ef5350;
+  background-color: #ffebee;
+  padding: 1em;
+  border-radius: 4px;
+}
+
+.disabled-btn {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rag-context {
+  margin-top: 1.5em;
+  text-align: left;
+}
+
+.rag-context h3 {
+  margin-bottom: 10px;
+  color: #1a237e;
+}
+
+.rag-chunk {
+  background: #eef2ff;
+  border: 1px solid #3f51b5;
+  padding: 1em;
+  border-radius: 6px;
+  margin-bottom: 1em;
+}
+
+.rag-chunk-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #303f9f;
+}
+
+.rag-chunk-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.rag-chunk-text mark {
+  background: yellow;
+  color: black;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
