@@ -11,9 +11,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -22,6 +24,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -41,11 +44,50 @@
   color: #888;
 }
 
+.whisper-type {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5em;
+}
+
+.whisper-type span {
+  font-weight: 500;
+  color: #646cff;
+}
+
+.whisper-type select {
+  padding: 0.5em 1em;
+  font-size: 1em;
+  border: 2px solid #646cff;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.whisper-type select:hover {
+  border-color: #535bf2;
+  background-color: #f9f9ff;
+}
+
+.whisper-type select:focus {
+  outline: none;
+  border-color: #535bf2;
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.1);
+}
+
 .pick-type {
   display: flex;
   gap: 12px;
   justify-content: center;
   align-items: center;
+}
+
+.pick-type span {
+  font-weight: 500;
+  color: #646cff;
 }
 
 .card-input {
@@ -85,8 +127,10 @@
 .rag-card {
   padding: 2em;
   margin-top: 1.5em;
-  background-color: #f3f4ff; /* nhẹ, không trùng summary green */
-  border: 1px solid #5865f2; /* xanh tím Discord nhẹ */
+  background-color: #f3f4ff;
+  /* nhẹ, không trùng summary green */
+  border: 1px solid #5865f2;
+  /* xanh tím Discord nhẹ */
   border-radius: 6px;
   text-align: left;
 }
@@ -187,3 +231,89 @@
   border-radius: 2px;
 }
 
+/* =============================
+   Time Transcript Section
+============================= */
+
+.time-transcript {
+  background-color: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 6px;
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.time-transcript-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+.time-transcript-header h2 {
+  margin: 0;
+  color: #0c4a6e;
+}
+
+.time-transcript-header button {
+  padding: 0.5em 1.2em;
+  font-size: 0.95em;
+  background-color: #0ea5e9;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.time-transcript-header button:hover {
+  background-color: #0284c7;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3);
+}
+
+.time-transcript-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.time-transcript-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.time-transcript-content ul li {
+  background: #e0f2fe;
+  border: 1px solid #38bdf8;
+  padding: 0.8em 1em;
+  border-radius: 6px;
+  margin-bottom: 0.8em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+  transition: all 0.3s ease;
+}
+
+.time-transcript-content ul li:hover {
+  background: #bae6fd;
+  border-color: #0ea5e9;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+}
+
+.time-transcript-content ul li span:first-child {
+  flex: 1;
+  color: #1e293b;
+  line-height: 1.5;
+}
+
+.time-transcript-content ul li span:last-child {
+  font-size: 0.85em;
+  color: #0369a1;
+  background-color: #bae6fd;
+  padding: 0.3em 0.7em;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  white-space: nowrap;
+  font-weight: 500;
+}

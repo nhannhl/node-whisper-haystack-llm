@@ -10,7 +10,7 @@ services:
       - ./models:/models
     command:
       - "--model"
-      - "/models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf"
+      - "/models/Qwen_Qwen3-4B-Instruct-2507-Q6_K_L.gguf"
       - "--port"
       - "8080"
       - "--host"
@@ -34,11 +34,22 @@ services:
     ports:
       - "9000:9000"
     environment:
-      - WHISPER_ASR_ENGINE=whisper-cpp
-      - WHISPER_CPP_MODEL=base-q8_1
-      - WHISPER_THREADS=6
-      - WHISPER_CPP_BEAM_SIZE=1
-      - WHISPER_CPP_MAX_CONTEXT=2048
+      - ASR_ENGINE=whisper-cpp
+      - ASR_MODEL=base-q8_1
+    networks:
+      - app_net
+
+  faster-whisper:
+    image: onerahmet/openai-whisper-asr-webservice@sha256:03b402335881cdab2e4939b24620809df8d6ceec3bf2712217d41c8761a0f5d4
+    container_name: faster-whisper
+    restart: unless-stopped
+    ports:
+      - "9001:9000"
+    environment:
+      - ASR_ENGINE=faster_whisper
+      - ASR_MODEL=base
+      - ASR_DEVICE=cpu
+      - ASR_QUANTIZATION=int8
     networks:
       - app_net
 
@@ -81,12 +92,13 @@ services:
       - whisper
       - vectordb
       - embeddings
+      - faster-whisper
     volumes:
       - ./api:/app
       - /app/node_modules
     env_file:
       - ./api/.env
-    command: ["npm", "run", "dev"]
+    command: [ "npm", "run", "dev" ]
     networks:
       - app_net
 
@@ -104,11 +116,10 @@ services:
       - /app/node_modules
     env_file:
       - ./front/.env
-    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    command: [ "npm", "run", "dev", "--", "--host", "0.0.0.0" ]
     networks:
       - app_net
 
 networks:
   app_net:
     driver: bridge
-

@@ -47,7 +47,7 @@ export async function processTranscriptToVectorDB(videoId, transcript) {
     }
 
     if (Array.isArray(chunk)) {
-      chunk = chunk.join(""); 
+      chunk = chunk.join("");
     }
 
     chunk = String(chunk);

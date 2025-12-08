@@ -9,10 +9,17 @@ function App() {
     'text': 'Text',
     'file': 'File Upload'
   };
+  const WHISPER_TYPE = {
+    'whisper-cpp': 'Whisper-cpp',
+    'faster-whisper': 'Faster-whisper(with timestamp)',
+    'whisperX': 'WhisperX(with timestamp and speaker diarization)'
+  };
   const API_SUMMARIZE_URL = import.meta.env.VITE_API_SUMMARIZE_URL;
+  const API_DEEP_PROCESS_URL = import.meta.env.VITE_API_DEEP_PROCESS_URL;
   const API_RAG_URL = import.meta.env.VITE_API_RAG_URL;
+  const API_DEEP_RAG_URL = import.meta.env.VITE_API_DEEP_RAG_URL;
   const [type, setType] = useState('url');
-  const [inputValue, setInputValue] = useState(''); 
+  const [inputValue, setInputValue] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -22,6 +29,10 @@ function App() {
   const [qaLoading, setQaLoading] = useState(false);
   const [qaError, setQaError] = useState(null);
   const [qaContext, setQaContext] = useState([]);
+  const [whisperType, setWhisperType] = useState('whisper-cpp');
+  const [timeTranscript, setTimeTranscript] = useState([]);
+  const [timeTranscriptVisible, setTimeTranscriptVisible] = useState(false);
+  const [videoId, setVideoId] = useState(null);
 
   useEffect(() => {
     setInputValue('');
@@ -30,46 +41,69 @@ function App() {
     setError(null);
   }, [type]);
 
+  useEffect(() => {
+    setType('url');
+  }, [whisperType]);
+
   const handleSummarize = async () => {
+    console.log("handleSummarize");
+    console.log(whisperType);
     setLoading(true);
     setError(null);
     setSummary(null);
+    setTimeTranscript([]);
+    setTimeTranscriptVisible(false);
 
     try {
       let response;
 
-      if (type === 'url') {
+      if (whisperType == 'whisper-cpp') {
+        if (type === 'url') {
+          if (!inputValue) {
+            throw new Error("Please enter a URL.");
+          }
+          response = await axios.post(API_SUMMARIZE_URL, {
+            type: 'url',
+            url: inputValue,
+          });
+        } else if (type === 'text') {
+          if (!inputValue) {
+            throw new Error("Please enter some text.");
+          }
+          response = await axios.post(API_SUMMARIZE_URL, {
+            type: 'lyrics',
+            content: inputValue,
+          });
+        } else if (type === 'file') {
+          if (!selectedFile) {
+            throw new Error("Please select a file.");
+          }
+          const formData = new FormData();
+          formData.append('type', 'video');
+          formData.append('video', selectedFile);
+
+          response = await axios.post(API_SUMMARIZE_URL, formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+        }
+      } else {
         if (!inputValue) {
           throw new Error("Please enter a URL.");
         }
-        response = await axios.post(API_SUMMARIZE_URL, {
-          type: 'url',
+        response = await axios.post(API_DEEP_PROCESS_URL, {
+          type: whisperType,
           url: inputValue,
         });
-      } else if (type === 'text') {
-        if (!inputValue) {
-          throw new Error("Please enter some text.");
-        }
-        response = await axios.post(API_SUMMARIZE_URL, {
-          type: 'lyrics',
-          content: inputValue,
-        });
-      } else if (type === 'file') {
-        if (!selectedFile) {
-          throw new Error("Please select a file.");
-        }
-        const formData = new FormData();
-        formData.append('type', 'video');
-        formData.append('video', selectedFile);
 
-        response = await axios.post(API_SUMMARIZE_URL, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        if (response.data.time_transcript) {
+          setTimeTranscript(response.data.time_transcript);
+        }
       }
 
       setSummary(response.data.summary);
+      setVideoId(response.data.videoId);
 
     } catch (err) {
       console.error("API Error:", err);
@@ -85,8 +119,10 @@ function App() {
     setQaAnswer(null);
 
     try {
-      const response = await axios.post(`${API_RAG_URL}`, {
+      const url = whisperType == 'whisperX' || whisperType == 'faster-whisper' ? API_DEEP_RAG_URL : API_RAG_URL;
+      const response = await axios.post(url, {
         question: qaInput,
+        videoId: videoId,
       });
 
       setQaAnswer(response.data.answer);
@@ -105,7 +141,11 @@ function App() {
     const regex = new RegExp(escaped, "gi");
 
     return text.replace(regex, (match) => `<mark>${match}</mark>`);
-  }
+  };
+
+  const handleTimeTranscriptClick = () => {
+    setTimeTranscriptVisible(!timeTranscriptVisible);
+  };
 
   return (
     <>
@@ -116,11 +156,22 @@ function App() {
       </div>
       <h1>Summerize</h1>
       <div className="card">
+        <div class="whisper-type">
+          <span>Whisper type:</span>
+          <select value={whisperType} onChange={(e) => setWhisperType(e.target.value)}>
+            {Object.entries(WHISPER_TYPE).map(([key, value]) => (
+              <option key={key} value={key}>{value}</option>
+            ))}
+          </select>
+        </div>
         <div class="pick-type">
           <span>Pick Input Type:</span>
           {Object.entries(TYPE).map(([key, value]) => (
             <div key={key}>
-              <input type="radio" id={key} name="type" value={key} checked={type == key} onChange={(e) => setType((type) => e.target.value)}/>
+              <input type="radio" id={key} name="type" value={key}
+                disabled={whisperType == 'whisperX' || whisperType == 'faster-whisper'}
+                checked={type == key}
+                onChange={(e) => setType(e.target.value)} />
               <label htmlFor={key}>{value}</label>
             </div>
           ))}
@@ -137,6 +188,24 @@ function App() {
         </button>
       </div>
       {error && <div className="card error-message">Error: {error}</div>}
+      {timeTranscript.length > 0 && (
+        <div className="card time-transcript">
+          <div className="time-transcript-header">
+            <h2>Time Transcript</h2>
+            <button onClick={handleTimeTranscriptClick}>View</button>
+          </div>
+          {timeTranscriptVisible && <div className="time-transcript-content">
+            <ul>
+              {timeTranscript.map((segment, index) => (
+                <li key={index}>
+                  <span>{segment.text}</span>
+                  <span>{segment.start} - {segment.end}</span>
+                </li>
+              ))}
+            </ul>
+          </div>}
+        </div>
+      )}
       {summary && (
         <div className="card summary-result">
           <h2>Summary</h2>

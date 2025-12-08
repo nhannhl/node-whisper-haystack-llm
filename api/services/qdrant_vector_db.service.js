@@ -69,9 +69,9 @@ export async function storeDocument(id, content, metadata = {}) {
   try {
     console.log(`[Qdrant] Storing document: ${id}`);
     console.log(`[Qdrant] Content length: ${content} characters`);
-    
+
     const embedding = await generateEmbedding(content);
-    
+
     await client.upsert(COLLECTION_NAME, {
       wait: true,
       points: [
@@ -87,7 +87,7 @@ export async function storeDocument(id, content, metadata = {}) {
         },
       ],
     });
-    
+
     console.log(`[Qdrant] Document ${id} stored successfully`);
   } catch (error) {
     console.error("[Qdrant] Error storing document:", error.message);
@@ -101,15 +101,25 @@ export async function storeDocument(id, content, metadata = {}) {
  * @param {number} limit - Number of results to return (default: 5)
  * @returns {Array} - Array of similar documents with scores
  */
-export async function searchDocuments(query, limit = 5) {
+export async function searchDocuments(query, videoId, limit = 10) {
   try {
     console.log(`[Qdrant] Searching for: "${query}"`);
-    
+
     const queryEmbedding = await generateEmbedding(query);
-    
+
     const results = await client.search(COLLECTION_NAME, {
       vector: queryEmbedding,
       limit,
+      filter: {
+        must: [
+          {
+            key: "videoId",
+            match: {
+              value: videoId,
+            },
+          },
+        ],
+      },
       with_payload: true,
       params: {
         hnsw_ef: 128,          // tăng để tăng accuracy (default ~64)
@@ -117,9 +127,9 @@ export async function searchDocuments(query, limit = 5) {
       },
       score_threshold: 0.25,   // loại kết quả quá lệch nghĩa
     });
-    
+
     console.log(`[Qdrant] Found ${results.length} results`);
-    
+
     return results.map((result) => ({
       id: result.id,
       content: result.payload?.content,
@@ -128,6 +138,78 @@ export async function searchDocuments(query, limit = 5) {
     }));
   } catch (error) {
     console.error("[Qdrant] Error searching documents:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Search for documents in Qdrant with optional time range filtering
+ * @param {string} query - Query text to search for
+ * @param {string} videoId - Video ID to filter by
+ * @param {number|null} start - Start time in seconds (null for no start limit)
+ * @param {number|null} end - End time in seconds (null for no end limit)
+ * @param {number} limit - Number of results to return (default: 10)
+ * @returns {Array} - Array of similar documents with scores
+ */
+export async function searchDocumentsByTimeRange(query, videoId, start = null, end = null, limit = 10) {
+  try {
+    console.log(`[Qdrant] Searching with time range: start=${start}, end=${end}`);
+
+    const queryEmbedding = await generateEmbedding(query);
+
+    // Build filter with time range
+    const filter = {
+      must: [
+        {
+          key: "videoId",
+          match: {
+            value: videoId,
+          },
+        },
+      ],
+    };
+
+    // Add time range filters if provided
+    if (start !== null) {
+      filter.must.push({
+        key: "start_time",
+        range: {
+          gte: start,
+        },
+      });
+    }
+
+    if (end !== null) {
+      filter.must.push({
+        key: "end_time",
+        range: {
+          lte: end,
+        },
+      });
+    }
+
+    const results = await client.search(COLLECTION_NAME, {
+      vector: queryEmbedding,
+      limit,
+      filter,
+      with_payload: true,
+      params: {
+        hnsw_ef: 128,
+        exact: false,
+      },
+      score_threshold: 0.25,
+    });
+
+    console.log(`[Qdrant] Found ${results.length} results in time range`);
+
+    return results.map((result) => ({
+      id: result.id,
+      content: result.payload?.content,
+      metadata: result.payload,
+      score: result.score,
+    }));
+  } catch (error) {
+    console.error("[Qdrant] Error searching documents by time range:", error.message);
     throw error;
   }
 }
@@ -159,6 +241,25 @@ export async function isExistingDocumentByHash(hash) {
     return exists;
   } catch (error) {
     console.error("[Qdrant] Error finding document by hash:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Delete all points in the collection, or points for a specific document
+ * @param {string|null} name - Deletes ALL points.
+ */
+export async function deleteAllPointsInDocument(name = null) {
+  try {
+    name = name ?? COLLECTION_NAME;
+    console.log(`[Qdrant] Deleting points for document: ${name}`);
+    await client.delete(name, {
+      filter: {},
+      wait: true,
+    });
+    console.log("[Qdrant] All points deleted successfully");
+  } catch (error) {
+    console.error("[Qdrant] Error deleting points:", error.message);
     throw error;
   }
 }
