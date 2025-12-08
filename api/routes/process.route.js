@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import { processHandler } from "../controllers/process.controller.js";
+import { deepProcessHandler } from "../controllers/deep-process.controller.js";
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ const upload = multer({
 });
 
 router.post("/process", upload.single("video"), processHandler);
+router.post("/deep-process", deepProcessHandler);
 
 export default router;

@@ -7,7 +7,7 @@ const LLAMA_URL = process.env.LLAMA_SERVICE_URL || "http://llama:8080";
  * @param {object} data - The request payload for LLaMA
  * @returns {string} - The response content from LLaMA
  */
-async function callLlama(data) {
+export async function callLlama(data) {
   console.log("[LLaMA] Start");
   console.time("llama");
 
@@ -42,7 +42,7 @@ export async function callLlamaForSummerize(text) {
     temperature: 0.2,
     stream: false
   };
-  
+
   return await callLlama(requestData);
 }
 

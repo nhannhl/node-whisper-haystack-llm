@@ -3,13 +3,13 @@ import { callLlamaForRAG } from "../services/llama.service.js";
 
 export async function ragQueryHandler(req, res) {
   try {
-    const { question } = req.body;
+    const { question, videoId } = req.body;
     if (!question || !question.trim()) {
       return res.status(400).json({ error: "Questionnaire requested" });
     }
 
     // 1. Search Qdrant
-    const results = await searchDocuments(question, 5);
+    const results = await searchDocuments(question, videoId, 10);
 
     const context = results
       .map(r => r.content)

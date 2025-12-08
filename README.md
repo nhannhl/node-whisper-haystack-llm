@@ -1,4 +1,4 @@
-# node-whisper-haystack-llm
+# node-whisper-llm
 
 A Node.js integration combining OpenAI's Whisper for speech-to-text, and LLM for intelligent responses at Local with CPU.
 
@@ -6,6 +6,7 @@ A Node.js integration combining OpenAI's Whisper for speech-to-text, and LLM for
 
 - Summerize youtube video (chrome extension, web app)
 - RAG for context query (ver2 updated)
+- Update ASR (faster-whisper for timestamp) + deep RAG + Query Router (ver3 updated)
 
 ## Installation
 
@@ -25,11 +26,13 @@ docker compose up -d
 - **Speech Recognition ASR(Automatic Speech Recognition)**
   - Using openai/whisper with https://huggingface.co/ggerganov/whisper.cpp
   - Run docker image onerahmet/openai-whisper-asr-webservice for webservice
+    - Using engine whisper-cpp
+    - Using faster-whisper for timestamp
 
 - **LLM Integration**
   - llama.cpp server (REST API) — local run with LLM (ghcr.io/ggerganov/llama.cpp:server)
   - Get model from https://huggingface.co/bartowski (Instruct)
-  - Model using "Meta-Llama-3.1-8B-Instruct-Q4_K_M"
+  - Model using "Qwen_Qwen3-4B-Instruct-2507-Q6_K_L"
 
 - **Get youtube**
   - Using yt-dlp ffmpeg lib
@@ -42,3 +45,8 @@ docker compose up -d
 - **VectorDB**
   - Using Qdrant
   - Image qdrant/qdrant:latest for CPU
+
+## DB
+
+- deleteAllPointsByDocument : delete all points by document name (db/delete-all-points/:name?)
+- migrateCollection : migrate collection to qdrant (db/migrate-collection)
