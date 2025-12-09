@@ -12,7 +12,7 @@ function App() {
   const WHISPER_TYPE = {
     'whisper-cpp': 'Whisper-cpp',
     'faster-whisper': 'Faster-whisper(with timestamp)',
-    'whisperX': 'WhisperX(with timestamp and speaker diarization)'
+    'whisper-x': 'WhisperX(with timestamp and speaker diarization)'
   };
   const API_SUMMARIZE_URL = import.meta.env.VITE_API_SUMMARIZE_URL;
   const API_DEEP_PROCESS_URL = import.meta.env.VITE_API_DEEP_PROCESS_URL;
@@ -119,7 +119,7 @@ function App() {
     setQaAnswer(null);
 
     try {
-      const url = whisperType == 'whisperX' || whisperType == 'faster-whisper' ? API_DEEP_RAG_URL : API_RAG_URL;
+      const url = whisperType == 'whisper-x' || whisperType == 'faster-whisper' ? API_DEEP_RAG_URL : API_RAG_URL;
       const response = await axios.post(url, {
         question: qaInput,
         videoId: videoId,
@@ -169,7 +169,7 @@ function App() {
           {Object.entries(TYPE).map(([key, value]) => (
             <div key={key}>
               <input type="radio" id={key} name="type" value={key}
-                disabled={whisperType == 'whisperX' || whisperType == 'faster-whisper'}
+                disabled={whisperType == 'whisper-x' || whisperType == 'faster-whisper'}
                 checked={type == key}
                 onChange={(e) => setType(e.target.value)} />
               <label htmlFor={key}>{value}</label>
@@ -198,7 +198,7 @@ function App() {
             <ul>
               {timeTranscript.map((segment, index) => (
                 <li key={index}>
-                  <span>{segment.text}</span>
+                  <span>{(segment.speaker && `${segment.speaker} _ `) || ''}{segment.text}</span>
                   <span>{segment.start} - {segment.end}</span>
                 </li>
               ))}

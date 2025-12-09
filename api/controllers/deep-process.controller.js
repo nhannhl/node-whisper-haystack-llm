@@ -1,9 +1,10 @@
 import path from "path";
 import { downloadAudioWithYtDlp } from "../services/yt.service.js";
 import { safeUnlink } from "../utils/file.util.js";
-import { sendToFasterWhisper } from "../services/whisper.service.js";
+import { sendToFasterWhisper, sendToWhisperX } from "../services/whisper.service.js";
 import { filterTimeTranscript } from "../utils/common.util.js";
 import { processTranscriptToVectorDB } from "../services/transcript_faster_whisper_pipeline.service.js";
+import { processTranscriptXToVectorDB } from "../services/transcript_whisper_x_pipeline.js";
 import { callLlamaForSummerize } from "../services/llama.service.js";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
@@ -28,6 +29,21 @@ export async function deepProcessHandler(req, res) {
                 await processTranscriptToVectorDB(id, transcript);
             } catch (e) {
                 console.error("[Pipeline] Whisper pipeline error:", e);
+            }
+        } else if (type === 'whisper-x') {
+            transcript = await sendToWhisperX(tempFile);
+            const transcriptText = transcript?.segments.map(segment => segment.text.trim()).join(" ").trim() || '';
+            transcript = {
+                ...transcript,
+                time_transcript: transcript?.segments || [],
+                text: transcriptText
+            };
+            console.log("[Pipeline] WhisperX transcript:", transcript);
+
+            try {
+                await processTranscriptXToVectorDB(id, transcript);
+            } catch (e) {
+                console.error("[Pipeline] WhisperX pipeline error:", e);
             }
         }
 

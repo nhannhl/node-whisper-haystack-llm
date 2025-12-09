@@ -7,6 +7,7 @@ A Node.js integration combining OpenAI's Whisper for speech-to-text, and LLM for
 - Summerize youtube video (chrome extension, web app)
 - RAG for context query (ver2 updated)
 - Update ASR (faster-whisper for timestamp) + deep RAG + Query Router (ver3 updated)
+- Update ASR (whisperX for speaker diarization) (ver4 updated)
 
 ## Installation
 

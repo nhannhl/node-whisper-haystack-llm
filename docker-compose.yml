@@ -53,6 +53,21 @@ services:
     networks:
       - app_net
 
+  whisper-x:
+    image: onerahmet/openai-whisper-asr-webservice@sha256:03b402335881cdab2e4939b24620809df8d6ceec3bf2712217d41c8761a0f5d4
+    container_name: whisper-x
+    restart: unless-stopped
+    ports:
+      - "9002:9000"
+    environment:
+      - ASR_ENGINE=whisperx
+      - ASR_MODEL=base
+      - ASR_DEVICE=cpu
+      - ASR_QUANTIZATION=int8
+      - HF_TOKEN=${HF_TOKEN}
+    networks:
+      - app_net
+
   # Qdrant vector database
   vectordb:
     image: qdrant/qdrant:latest
@@ -89,10 +104,11 @@ services:
       - "3000:3000"
     depends_on:
       - llama
-      - whisper
+      # - whisper
       - vectordb
       - embeddings
-      - faster-whisper
+      # - faster-whisper
+      - whisper-x
     volumes:
       - ./api:/app
       - /app/node_modules
