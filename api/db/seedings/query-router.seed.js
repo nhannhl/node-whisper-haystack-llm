@@ -84,6 +84,69 @@ const queryRouter = [
         "handler": "qaSummary",
         "category": "summary",
         "description": "Các câu chứa từ khóa như tóm tắt, summary, tổng hợp và đề cập đến đoạn thời gian."
+    },
+    {
+        "id": "speaker_id_1",
+        "query_type": "speaker_identification",
+        "handler": "qaSpeakerIdentify",
+        "category": "speaker",
+        "description": "Câu hỏi nhằm xác định ai là người đang nói tại một thời điểm hoặc đoạn video cụ thể."
+    },
+    {
+        "id": "speaker_id_2",
+        "query_type": "speaker_identification",
+        "handler": "qaSpeakerIdentify",
+        "category": "speaker",
+        "description": "Các câu dạng 'ai đang nói', 'đây là giọng của ai', hoặc 'speaker nào nói câu này'."
+    },
+    {
+        "id": "speaker_id_3",
+        "query_type": "speaker_identification",
+        "handler": "qaSpeakerIdentify",
+        "category": "speaker",
+        "description": "Nếu câu hỏi yêu cầu xác định speaker gắn với một đoạn hoặc lời thoại cụ thể, nó thuộc speaker_identification."
+    },
+    {
+        "id": "speaker_content_1",
+        "query_type": "speaker_specific_question",
+        "handler": "qaSpeakerContent",
+        "category": "speaker",
+        "description": "Câu hỏi yêu cầu nội dung, ý kiến hoặc thông tin do một speaker cụ thể trình bày."
+    },
+    {
+        "id": "speaker_content_2",
+        "query_type": "speaker_specific_question",
+        "handler": "qaSpeakerContent",
+        "category": "speaker",
+        "description": "Các câu dạng 'người này nói gì', 'ý chính của speaker X', hoặc 'đoạn người nam/nữ trình bày nội dung gì'."
+    },
+    {
+        "id": "speaker_content_3",
+        "query_type": "speaker_specific_question",
+        "handler": "qaSpeakerContent",
+        "category": "speaker",
+        "description": "Nếu người dùng hỏi về nội dung phát biểu của một speaker riêng biệt, có hoặc không kèm timestamp."
+    },
+    {
+        "id": "speaker_cmp_1",
+        "query_type": "speaker_comparison",
+        "handler": "qaSpeakerCompare",
+        "category": "speaker",
+        "description": "Câu hỏi yêu cầu so sánh, đối chiếu hoặc phân tích sự khác biệt giữa hai hoặc nhiều speaker."
+    },
+    {
+        "id": "speaker_cmp_2",
+        "query_type": "speaker_comparison",
+        "handler": "qaSpeakerCompare",
+        "category": "speaker",
+        "description": "Các câu dạng 'hai người nói khác nhau ở điểm nào', 'quan điểm của nam và nữ có gì khác', hoặc 'ai phản biện ai'."
+    },
+    {
+        "id": "speaker_cmp_3",
+        "query_type": "speaker_comparison",
+        "handler": "qaSpeakerCompare",
+        "category": "speaker",
+        "description": "Nếu câu hỏi yêu cầu đối chiếu, tranh luận hoặc tổng hợp quan điểm giữa các speaker, nó thuộc speaker_comparison."
     }
 ];
 

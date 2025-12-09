@@ -263,3 +263,28 @@ export async function deleteAllPointsInDocument(name = null) {
     throw error;
   }
 }
+
+/**
+ * Search for documents in Qdrant with optional time range filtering
+ * @param {Object} filter - Filter object to apply to the search
+ * @returns {Array} - Array of similar documents with scores
+ */
+export async function searchByFilter(filter) {
+    try {
+        console.log(`[Qdrant] Searching with filter: ${JSON.stringify(filter)}`);
+        const results = await client.scroll(COLLECTION_NAME, {
+            filter,
+            limit: 10,
+            with_payload: true,
+        });
+        console.log(`[Qdrant] Found ${results.points.length} results`);
+        return results.points.map((point) => ({
+            id: point.id,
+            content: point.payload?.content,
+            metadata: point.payload,
+        }));
+    } catch (error) {
+        console.error("[Qdrant] Error searching documents by filter:", error.message);
+        throw error;
+    }
+}

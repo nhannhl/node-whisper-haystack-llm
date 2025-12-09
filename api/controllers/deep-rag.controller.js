@@ -19,7 +19,7 @@ export async function deepRAGQueryHandler(req, res) {
         console.error("[Deep RAG] Error:", error.message);
         return res.status(500).json({
             error: "RAG handle error",
-            detail: err.message
+            detail: error.message
         });
     }
 }
