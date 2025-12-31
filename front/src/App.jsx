@@ -33,11 +33,13 @@ function App() {
   const [timeTranscript, setTimeTranscript] = useState([]);
   const [timeTranscriptVisible, setTimeTranscriptVisible] = useState(false);
   const [videoId, setVideoId] = useState(null);
+  const [audioPath, setAudioPath] = useState(null);
 
   useEffect(() => {
     setInputValue('');
     setSelectedFile(null);
     setSummary(null);
+    setAudioPath(null);
     setError(null);
   }, [type]);
 
@@ -51,6 +53,7 @@ function App() {
     setLoading(true);
     setError(null);
     setSummary(null);
+    setAudioPath(null);
     setTimeTranscript([]);
     setTimeTranscriptVisible(false);
 
@@ -103,6 +106,7 @@ function App() {
       }
 
       setSummary(response.data.summary);
+      setAudioPath(response.data.audioPath);
       setVideoId(response.data.videoId);
 
     } catch (err) {
@@ -210,6 +214,13 @@ function App() {
         <div className="card summary-result">
           <h2>Summary</h2>
           <p>{summary}</p>
+          {audioPath && (
+            <div className="audio-player" style={{ marginTop: '1rem' }}>
+              <audio controls src={`${new URL(API_DEEP_PROCESS_URL).origin}${audioPath}`} style={{ width: '100%' }}>
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          )}
         </div>
       )}
       {/* ===================== RAG Q/A Section ===================== */}

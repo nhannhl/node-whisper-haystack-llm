@@ -1,0 +1,6 @@
+piper-tts
+numpy
+soundfile
+fastapi
+uvicorn[standard]
+onnxruntime

@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piper Training Dataset Recorder</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .progress {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .sentence-display {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            line-height: 1.6;
+            color: #333;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .record-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .record-btn:hover:not(:disabled) {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .record-btn.recording {
+            background: #ff4757;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .stop-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .stop-btn:hover:not(:disabled) {
+            background: #5a6268;
+            transform: scale(1.05);
+        }
+
+        .next-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .next-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .download-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .recordings-list {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .recordings-list h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .recording-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recording-info {
+            flex: 1;
+        }
+
+        .recording-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .recording-sentence {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .recording-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 80px;
+        }
+
+        .play-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .play-btn:hover:not(:disabled) {
+            background: #138496;
+            transform: scale(1.05);
+        }
+
+        .play-btn.playing {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .delete-btn:hover:not(:disabled) {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .status.recording {
+            color: #dc3545;
+        }
+
+        .status.ready {
+            color: #28a745;
+        }
+
+        .status.idle {
+            color: #6c757d;
+        }
+
+        .save-indicator {
+            text-align: center;
+            font-size: 0.85em;
+            color: #28a745;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Piper Training Dataset Recorder</h1>
+        
+        <div class="progress">
+            Sentence <span id="current-index">1</span> of <span id="total-sentences">50</span>
+        </div>
+
+        <div class="sentence-display" id="sentence-display">
+            Loading...
+        </div>
+
+        <div class="status idle" id="status">Ready to record</div>
+        <div class="save-indicator" id="save-indicator">💾 Progress saved</div>
+
+        <div class="controls">
+            <button id="record-btn" class="record-btn">🎤 Record</button>
+            <button id="stop-btn" class="stop-btn" disabled>⏹ Stop</button>
+            <button id="next-btn" class="next-btn" disabled>➡ Next Sentence</button>
+            <button id="download-btn" class="download-btn" disabled>📥 Download All</button>
+        </div>
+
+        <div class="recordings-list" id="recordings-list" style="display: none;">
+            <h2>Recordings</h2>
+            <div id="recordings-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sentences from piper50.txt
+        const sentences = [
+            "Thế nhưng nó lại có mặt ở mọi ngóc ngách, ngã đường và người dân Việt coi phở như một món ăn thân thuộc.",
+            "Bánh mì thơm ngon, giá thành rẻ nên đã trở thành món ăn quen thuộc của nhiều người.",
+            "Nó được làm từ bánh tráng cuộn với các loại rau thơm, bún và một số loại thịt như thịt bò, heo, vịt, tôm, cá, cua.",
+            "Nếu có khoảng trống dưới thắt lưng, có thể sử dụng một chiếc gối nhỏ để hỗ trợ thêm.",
+            "Trong nước dùng của bún, người Huế thường nêm vào một ít mắm ruốc, góp phần làm nên hương vị rất riêng của nồi bún bò Huế.",
+            "Đây cũng là vai diễn đầu tiên của bà trên màn ảnh nhưng bà đã bất ngờ gây ấn tượng mạnh mẽ với khán giả.",
+            "Bà cũng chú trọng tìm kiếm những nghệ sĩ trẻ đam mê, nhiệt huyết và không ngại thử thách.",
+            "Bạn nên liên lạc với bên bảo hành sửa chữa để tiến hành kiểm tra xem ống dẫn ga có bị rò rỉ hay không.",
+            "Hai bên đường là rừng đước xanh mang lại cảm giác dễ chịu, thư thả.",
+            "Trương Dư Hi chưa bao giờ lên tiếng về nghi vấn chỉnh sửa nhan sắc.",
+            "Với thiết kế hiện đại và thông minh, chúng có thể đáp ứng mọi yêu cầu và lợi ích của tất cả các đối tượng tham gia giao thông.",
+            "Đây là một loại giày đi xe đạp thường được các tuyển thủ chọn đồng hành.",
+            "Loại giày này không tiện dụng khi đi bộ do nó không có lực bám ở đế và không có khả năng uốn cong mu bàn chân.",
+            "Công nghệ mới này sẽ đặc biệt hữu ích tại những đoạn đường có lối đi bộ qua đường khó quan sát do đặc thù địa hình.",
+            "Mùa đông chính là thời điểm mà một hệ thống máy chiếu như thế này có thể phát huy tối đa tác dụng.",
+            "Gu thời trang vừa gợi cảm, vừa cá tính của cô cũng tạo thành xu hướng trong giới trẻ.",
+            "Giáo sư cho rằng vận tốc gió không phải là hằng số xuyên suốt quá trình làm thí nghiệm.",
+            "Máy sấy giày sẽ sử dụng luồng khí ấm áp, nhẹ nhàng để làm khô đôi giày của bạn.",
+            "Bạn có thể sử dụng bàn chải chuyên dụng kết hợp cùng với nước ấm và xà phòng để loại bỏ đi những vết bẩn cứng đầu bám lâu ngày.",
+            "Để tổng hợp ước tính toàn cầu của họ về phạm vi băng quyển, các tác giả đã chia bề mặt hành tinh thành một hệ thống lưới.",
+            "Ở thành phố, đường nhựa và bê tông hấp thụ nhiệt trong suốt cả ngày, ban đêm sẽ phả lại nhiệt vào bầu không khí.",
+            "Mây vì thế cũng không thể hình thành, cho phép ánh nắng tiếp tục chiếu trực tiếp xuống dưới.",
+            "Trong vòm nhiệt, gió nóng luân chuyển không khí cục bộ, tiếp tục củng cố mái vòm và tạo thành các đợt sóng nhiệt nguy hiểm.",
+            "Hậu quả mà một vòm nhiệt có thể gây ra cho khu vực nó ảnh hưởng là những đám cháy.",
+            "Khi thân nhiệt tăng lên, máu sẽ đặc lại khiến nhịp tim và lực nó sản sinh trong mỗi lần co bóp đồng thời cũng phải tăng lên.",
+            "Nhưng bản thân trái tim cũng cần phải được cung cấp nhiều máu hơn mới có thể hoạt động trong điều kiện căng thẳng.",
+            "Chúng ta biết một số loài động vật máu lạnh như ếch và rắn di chuyển rất chậm khi gặp nhiệt độ lạnh.",
+            "Điều này giúp chúng có thể di chuyển nhanh, hiệu quả và tìm đến nơi trú ẩn ẩm áp.",
+            "Mật độ xương của bệnh nhân này dày đặc hơn gấp 8 lần so với người bình thường.",
+            "Điều này không gây ra bất kỳ vấn đề gì cho bệnh nhân ngoài khả năng không thể bị gãy xương.",
+            "Nhìn những khoảnh khắc hạnh phúc của cặp đôi, nhiều khán giả không khỏi trầm trồ ngưỡng mộ.",
+            "Nhờ đó con người có thể gợi nhớ chính xác thứ tự mà sự việc xảy ra.",
+            "Sự hình thành ký ức trải nghiệm cần có sự kết nối giữa các sự kiện trong một trải nghiệm với trình tự thời gian.",
+            "Sự an ủi có thể gây ảnh hưởng tích cực đến các phản ứng tâm sinh lý, tăng cường hệ miễn dịch, nội tiết và tuần hoàn.",
+            "Khi chuyển từ đồ uống có đường sang nước lọc, bạn sẽ chứng kiến một điều kỳ diệu xảy ra với làn da mình.",
+            "Nếu bị đau lưng do thoát vị đĩa đệm, tư thế nằm nghiêng giống thai nhi trong bụng mẹ có thể mang lại hiệu quả.",
+            "Điều này khiến trái tim phải làm việc rất cực nhọc mới có thể bơm máu đi khắp cơ thể.",
+            "Nằm sấp và đặt một chiếc gối ở bụng dưới có thể giảm bớt áp lực lên phần lưng.",
+            "Nước máy hay một số loại nước đóng chai có chứa florua giúp phòng ngừa sâu răng.",
+            "Khi bạn uống nước trong bữa ăn, nó sẽ tạo thêm áp lực cho dạ dày.",
+            "Ngoài ra, một số loại đồ uống sẽ khiến tình trạng a-xít trào ngược tồi tệ hơn như rượu, cà phê, trà, đặc biệt là đồ uống có ga.",
+            "Theo tính toán trung bình, một người đàn ông trưởng thành nên uống khoảng 3 lít nước mỗi ngày.",
+            "Uống quá nhiều nước cũng có thể pha loãng máu của bạn, dẫn đến sự mất cân bằng chất điện giải, hạ natri máu.",
+            "Nó có thể dẫn đến nhiều nguy cơ sức khỏe, thậm chí là nguy hiểm tính mạng.",
+            "Trong suốt nhiều năm, chủ đề tiền điện mùa hè tăng đột biến luôn được đưa ra bàn luận sôi nổi không có hồi kết.",
+            "Phiên bản này là loại mới nhất, lồng giặt có độ sâu vừa phải được làm bằng thép không gỉ và rất chắc chắn.",
+            "Những chức năng kể trên cũng vừa đủ để đáp ứng nhu cầu sử dụng của mọi hộ gia đình.",
+            "Ngoài ra, bạn cũng có thể sử dụng giấy để hút ẩm cho giày bằng cách bọc chúng ở phía bên ngoài.",
+            "Điều này khiến cánh cửa tủ không thể khít hoặc sẽ có xu hướng tự mở nếu người dùng không để ý hoặc để nhiều thực phẩm trong tủ.",
+            "Tuy nhiên, bạn vẫn phải đảm bảo cơ thể luôn được bù nước đầy đủ trong cả ngày.",
+            "Xin chào, đây là bộ dữ liệu giọng nói tiếng Việt dành cho trí tuệ nhân tạo.",
+            "Hôm nay trời rất đẹp, nắng vàng rực rỡ và gió thổi nhè nhẹ.",
+            "Tôi đang cố gắng luyện tập để có một giọng đọc tự nhiên và truyền cảm nhất.",
+            "Buổi sáng thức dậy, tôi thường uống một ly nước ấm và tập thể dục nhẹ nhàng.",
+            "Bữa sáng là bữa ăn quan trọng nhất trong ngày, cung cấp năng lượng cho cơ thể.",
+            "Việt Nam là một đất nước xinh đẹp với đường bờ biển dài và nhiều danh lam thắng cảnh.",
+            "Phở là món ăn truyền thống nổi tiếng, được bạn bè quốc tế vô cùng yêu thích.",
+            "Hà Nội ba sáu phố phường mang trong mình vẻ đẹp cổ kính và trầm mặc.",
+            "Sài Gòn năng động và nhộn nhịp, là thành phố không bao giờ ngủ.",
+            "Đà Nẵng được mệnh danh là thành phố đáng sống với những cây cầu độc đáo.",
+            "Miền Tây sông nước mênh mông, con người chân chất, thật thà và hiếu khách.",
+            "Tây Bắc mùa này hoa ban nở trắng rừng, cảnh sắc đẹp như một bức tranh thủy mặc.",
+            "Chúng ta cần chung tay bảo vệ môi trường sống xanh, sạch và đẹp.",
+            "Việc giảm thiểu rác thải nhựa là hành động thiết thực để cứu lấy đại dương.",
+            "Trồng thêm một cây xanh là góp thêm một lá phổi cho trái đất.",
+            "Công nghệ thông tin đang thay đổi cuộc sống của chúng ta từng ngày, từng giờ.",
+            "Trí tuệ nhân tạo sẽ hỗ trợ con người giải quyết những bài toán phức tạp.",
+            "Điện thoại thông minh giúp kết nối mọi người dù ở bất cứ nơi đâu.",
+            "Mạng xã hội là con dao hai lưỡi, chúng ta cần sử dụng một cách thông minh.",
+            "Đọc sách giúp mở mang kiến thức và nuôi dưỡng tâm hồn phong phú hơn.",
+            "Thất bại là mẹ thành công, đừng bao giờ nản lòng trước khó khăn thử thách.",
+            "Kiên trì và nỗ lực không ngừng là chìa khóa dẫn đến mọi thành công.",
+            "Hãy sống mỗi ngày thật trọn vẹn và ý nghĩa như thể đó là ngày cuối cùng.",
+            "Gia đình là nơi cuộc sống bắt đầu và tình yêu không bao giờ kết thúc.",
+            "Tình bạn chân chính là viên ngọc quý giá mà ai cũng muốn gìn giữ.",
+            "Sức khỏe là vốn quý nhất của con người, hãy trân trọng và giữ gìn nó.",
+            "Tập yoga giúp cơ thể dẻo dai và tinh thần thư thái, giảm bớt căng thẳng.",
+            "Chạy bộ mỗi ngày là cách đơn giản để rèn luyện sức bền và tim mạch.",
+            "Uống đủ hai lít nước mỗi ngày giúp làn da luôn tươi trẻ và căng tràn sức sống.",
+            "Ăn nhiều rau xanh và trái cây cung cấp vitamin cần thiết cho cơ thể.",
+            "Giấc ngủ ngon giúp tái tạo năng lượng và tăng cường khả năng tập trung.",
+            "Đừng thức quá khuya, điều đó rất có hại cho não bộ và hệ thần kinh.",
+            "Âm nhạc là ngôn ngữ của cảm xúc, giúp xoa dịu những nỗi buồn sâu kín.",
+            "Những giai điệu du dương của bài hát khiến lòng người cảm thấy bình yên lạ thường.",
+            "Hội họa giúp con người thỏa sức sáng tạo và thể hiện cái nhìn về thế giới.",
+            "Nhiếp ảnh là nghệ thuật lưu giữ những khoảnh khắc đẹp đẽ của thời gian.",
+            "Du lịch giúp chúng ta khám phá những vùng đất mới và trải nghiệm văn hóa đa dạng.",
+            "Mỗi chuyến đi là một bài học quý giá, giúp ta trưởng thành hơn trong suy nghĩ.",
+            "Hãy luôn mỉm cười, cuộc sống sẽ trả lại cho bạn những niềm vui bất ngờ.",
+            "Lòng biết ơn là khởi nguồn của hạnh phúc và sự bình an trong tâm hồn.",
+            "Khoan dung với người khác cũng chính là giải thoát cho bản thân mình.",
+            "Sự trung thực là nền tảng vững chắc cho mọi mối quan hệ bền lâu.",
+            "Trách nhiệm là phẩm chất cần có của một công dân gương mẫu trong xã hội hiện đại.",
+            "Tuổi trẻ là khoảng thời gian đẹp nhất để theo đuổi đam mê và khát vọng.",
+            "Đừng ngại thay đổi, vì cuộc sống luôn vận động và phát triển không ngừng.",
+            "Học, học nữa, học mãi, kiến thức là đại dương bao la không có bến bờ.",
+            "Thầy cô là những người lái đò thầm lặng, đưa các thế hệ học trò sang sông.",
+            "Mùa thu Hà Nội nồng nàn hoa sữa, gợi nhớ bao kỷ niệm của một thời đã qua.",
+            "Cơn mưa rào mùa hạ xua tan đi cái nóng oi bức, mang lại sự mát lành.",
+            "Những cánh đồng lúa chín vàng óng ả trải dài tít tắp đến tận chân trời.",
+            "Tiếng sáo diều vi vu trong gió chiều gợi nhớ về tuổi thơ êm đềm bên lũy tre làng.",
+            "Đêm nay trăng sáng quá, ánh trăng vằng vặc soi sáng cả con đường làng.",
+            "Tiếng dế kêu râm ran trong đêm tĩnh mịch tạo nên bản hòa ca của đồng quê.",
+            "Biển đêm ầm ào sóng vỗ, những con sóng bạc đầu xô nhau chạy vào bờ.",
+            "Bình minh trên biển đẹp huy hoàng, mặt trời đỏ rực từ từ nhô lên khỏi mặt nước.",
+            "Hoàng hôn buông xuống, cả bầu trời nhuộm một màu tím biếc đầy thơ mộng.",
+            "Rừng nguyên sinh là ngôi nhà chung của hàng ngàn loài động thực vật quý hiếm.",
+            "Bảo tồn đa dạng sinh học là nhiệm vụ cấp bách của toàn nhân loại.",
+            "Biến đổi khí hậu đang gây ra những hậu quả nghiêm trọng trên toàn cầu.",
+            "Lũ lụt và hạn hán ngày càng diễn biến phức tạp và khó lường hơn.",
+            "Tiết kiệm điện và nước là hành động nhỏ nhưng mang lại ý nghĩa lớn lao.",
+            "Sử dụng năng lượng tái tạo là xu hướng tất yếu của tương lai bền vững.",
+            "Xe điện đang dần thay thế xe chạy bằng xăng dầu để giảm thiểu ô nhiễm.",
+            "Thành phố thông minh sẽ mang lại cuộc sống tiện nghi và hiện đại cho cư dân.",
+            "Chuyển đổi số là cơ hội để các doanh nghiệp bứt phá và vươn ra biển lớn.",
+            "Khởi nghiệp đổi mới sáng tạo đang là phong trào lan tỏa mạnh mẽ trong giới trẻ.",
+            "Thương mại điện tử giúp việc mua sắm trở nên dễ dàng và thuận tiện hơn bao giờ hết.",
+            "Thanh toán không dùng tiền mặt đang trở thành thói quen của người tiêu dùng hiện đại.",
+            "An ninh mạng là vấn đề sống còn trong kỷ nguyên số hóa toàn cầu.",
+            "Bảo mật thông tin cá nhân là quyền và trách nhiệm của mỗi người sử dụng internet.",
+            "Trí tuệ nhân tạo có thể sáng tác nhạc, viết văn và vẽ tranh như con người.",
+            "Robot đang dần thay thế con người trong những công việc nặng nhọc và nguy hiểm.",
+            "Công nghệ in ba đê mở ra những khả năng vô hạn trong sản xuất và y tế.",
+            "Khám phá vũ trụ là giấc mơ ngàn đời của nhân loại, chinh phục những vì sao xa xôi.",
+            "Các nhà khoa học đang nỗ lực tìm kiếm sự sống ngoài trái đất.",
+            "Y học hiện đại đã chữa trị được nhiều căn bệnh nan y, kéo dài tuổi thọ con người.",
+            "Vắc xin là vũ khí hữu hiệu nhất để phòng chống các bệnh truyền nhiễm nguy hiểm.",
+            "Chế độ ăn uống lành mạnh và lối sống tích cực giúp phòng ngừa bệnh tật hiệu quả.",
+            "Ung thư không phải là án tử hình nếu được phát hiện sớm và điều trị kịp thời.",
+            "Bệnh tim mạch là nguyên nhân gây tử vong hàng đầu trên thế giới hiện nay.",
+            "Trầm cảm là căn bệnh tâm lý phổ biến, cần được sự quan tâm và chia sẻ của cộng đồng.",
+            "Đừng bao giờ phán xét người khác khi bạn chưa thực sự hiểu câu chuyện của họ.",
+            "Lắng nghe là một kỹ năng quan trọng giúp thấu hiểu và kết nối trái tim.",
+            "Lời nói chẳng mất tiền mua, lựa lời mà nói cho vừa lòng nhau.",
+            "Một nụ cười bằng mười thang thuốc bổ, hãy cười nhiều hơn mỗi ngày.",
+            "Hạnh phúc không phải là điểm đến, mà là hành trình chúng ta đang đi.",
+            "Thành công không đo bằng tiền bạc, mà bằng những giá trị ta mang lại cho đời.",
+            "Sống đơn giản giúp tâm hồn thanh thản và bớt đi những lo toan muộn phiền.",
+            "Thiền định giúp con người tìm lại sự cân bằng và bình yên trong nội tâm.",
+            "Hãy yêu thương bản thân mình trước khi mong chờ tình yêu từ người khác.",
+            "Mỗi người sinh ra đều là một bản thể duy nhất, hãy tự tin là chính mình.",
+            "Đừng so sánh mình với người khác, vì mỗi loài hoa đều có vẻ đẹp riêng.",
+            "Thời gian là vàng bạc, đừng lãng phí nó vào những việc vô bổ.",
+            "Lập kế hoạch làm việc giúp bạn quản lý thời gian hiệu quả và đạt mục tiêu nhanh hơn.",
+            "Kỷ luật bản thân là cầu nối giữa mục tiêu và thành tựu.",
+            "Đọc sách mỗi ngày giúp não bộ luôn hoạt động và sắc bén.",
+            "Học ngoại ngữ mở ra cánh cửa giao lưu với các nền văn hóa trên thế giới.",
+            "Tiếng Việt giàu và đẹp, là niềm tự hào của dân tộc ta qua ngàn đời.",
+            "Giữ gìn sự trong sáng của tiếng Việt là trách nhiệm của mỗi người con đất Việt.",
+            "Ca dao tục ngữ là kho tàng trí tuệ dân gian vô giá của ông cha ta.",
+            "Truyện Kiều của Nguyễn Du là kiệt tác văn học sống mãi với thời gian.",
+            "Dế Mèn phiêu lưu ký là cuốn sách gối đầu giường của bao thế hệ thiếu nhi.",
+            "Những câu chuyện cổ tích nuôi dưỡng tâm hồn trẻ thơ hướng tới chân, thiện, mỹ.",
+            "Văn hóa ẩm thực Việt Nam tinh tế, hài hòa âm dương ngũ hành.",
+            "Bánh chưng, bánh giầy tượng trưng cho trời và đất, lòng biết ơn tổ tiên.",
+            "Tết Nguyên Đán là dịp để gia đình sum họp, đoàn viên sau một năm làm việc vất vả.",
+            "Mâm ngũ quả ngày tết thể hiện ước mong về một năm mới sung túc, đủ đầy.",
+            "Áo dài là trang phục truyền thống tôn vinh vẻ đẹp dịu dàng của người phụ nữ Việt Nam.",
+            "Nón lá là biểu tượng bình dị, thân thương của người nông dân một nắng hai sương.",
+            "Cây tre kiên cường, bất khuất như phẩm chất của con người Việt Nam.",
+            "Hoa sen thanh cao, gần bùn mà chẳng hôi tanh mùi bùn.",
+            "Lịch sử bốn ngàn năm dựng nước và giữ nước là bản hùng ca bi tráng.",
+            "Chiến thắng Điện Biên Phủ lừng lẫy năm châu, chấn động địa cầu.",
+            "Ngày Quốc khánh mùng hai tháng chín là ngày hội non sông, đất nước trọn niềm vui.",
+            "Chủ tịch Hồ Chí Minh là vị lãnh tụ kính yêu của dân tộc Việt Nam.",
+            "Những tấm gương người tốt việc tốt luôn tỏa sáng giữa đời thường.",
+            "Hiến máu nhân đạo là nghĩa cử cao đẹp, một giọt máu cho đi, một cuộc đời ở lại.",
+            "Quyên góp ủng hộ đồng bào lũ lụt thể hiện tinh thần lá lành đùm lá rách.",
+            "Tình làng nghĩa xóm tối lửa tắt đèn có nhau, đậm đà bản sắc văn hóa làng xã.",
+            "Giới trẻ ngày nay năng động, sáng tạo và đầy nhiệt huyết cống hiến.",
+            "Thanh niên là rường cột của nước nhà, là chủ nhân tương lai của đất nước.",
+            "Khát vọng vươn lên thoát nghèo là động lực to lớn của người dân vùng cao.",
+            "Những cây cầu treo giúp các em nhỏ đến trường an toàn hơn trong mùa mưa lũ.",
+            "Điện đường trường trạm đang dần thay đổi diện mạo nông thôn mới.",
+            "Xây dựng nông thôn mới là chủ trương lớn của Đảng và Nhà nước.",
+            "Kinh tế biển là mũi nhọn chiến lược trong phát triển kinh tế đất nước.",
+            "Du lịch sinh thái đang là xu hướng được nhiều du khách trong và ngoài nước lựa chọn.",
+            "Bảo vệ rừng là bảo vệ nguồn nước và sự sống của chính chúng ta.",
+            "Không săn bắt, buôn bán động vật hoang dã là vi phạm pháp luật và đạo đức.",
+            "Hãy nói không với rác thải nhựa dùng một lần để bảo vệ môi trường.",
+            "Phân loại rác tại nguồn giúp giảm tải áp lực cho các bãi chôn lấp rác thải.",
+            "Sử dụng túi vải thay cho túi ni lông là hành động văn minh và thiết thực.",
+            "Nước sạch là tài nguyên quý giá, hãy sử dụng tiết kiệm và hiệu quả.",
+            "Trồng rừng ngập mặn giúp chắn sóng, bảo vệ đê điều và cải thiện môi trường.",
+            "Năng lượng mặt trời là nguồn năng lượng sạch vô tận mà thiên nhiên ban tặng.",
+            "Điện gió ngoài khơi đang mở ra triển vọng mới cho ngành năng lượng Việt Nam.",
+            "Công nghiệp ô tô Việt Nam đang từng bước khẳng định vị thế trên bản đồ thế giới.",
+            "Nông sản Việt Nam ngày càng vươn xa, chinh phục những thị trường khó tính nhất.",
+            "Gạo Việt Nam ngon nhất thế giới, là niềm tự hào của người nông dân.",
+            "Cà phê Việt Nam đậm đà hương vị, được bạn bè quốc tế đánh giá cao.",
+            "Vải thiều Lục Ngạn ngọt lịm, đỏ mọng, là đặc sản nức tiếng gần xa.",
+            "Nhãn lồng Hưng Yên cùi dày hạt nhỏ, hương thơm vương vấn mãi không quên.",
+            "Cam Cao Phong mọng nước, ngọt thanh, là món quà quý của vùng đất Hòa Bình.",
+            "Chè Thái Nguyên thơm ngon đệ nhất, tiền chát hậu ngọt làm say lòng người.",
+            "Bún chả Hà Nội hương vị khó quên, từng được Tổng thống Mỹ thưởng thức.",
+            "Bánh mì Phượng Hội An nổi tiếng thế giới với hương vị đặc biệt hấp dẫn.",
+            "Cơm tấm Sài Gòn giản dị mà tinh tế, là món ăn sáng quen thuộc của người dân.",
+            "Hủ tiếu Nam Vang nước dùng ngọt lịm, sợi hủ tiếu dai dai ăn mãi không chán.",
+            "Mì Quảng đậm đà tình quê, mang hương vị đặc trưng của vùng đất Quảng Nam.",
+            "Bún bò Huế cay nồng, đậm vị sả và mắm ruốc, ăn một lần nhớ mãi.",
+            "Nem nướng Nha Trang thơm lừng, cuốn với bánh tráng và rau sống ngon tuyệt.",
+            "Lẩu mắm miền Tây đậm đà hương vị sông nước, quyến rũ thực khách phương xa.",
+            "Bánh xèo giòn tan, vàng ruộm, ăn kèm với rau rừng và nước chấm chua ngọt.",
+            "Chè cung đình Huế thanh tao, cầu kỳ, là nét đẹp văn hóa ẩm thực cố đô.",
+            "Cốm làng Vòng xanh ngát hương lúa non, là món quà thu tinh tế của Hà Nội.",
+            "Ô mai Hàng Đường chua cay mặn ngọt, là thức quà vặt được nhiều người yêu thích.",
+            "Gốm Bát Tràng tinh xảo, mang đậm hồn cốt dân tộc qua bàn tay nghệ nhân.",
+            "Lụa Vạn Phúc mềm mại, óng ả, là sản phẩm thủ công truyền thống lâu đời.",
+            "Tranh Đông Hồ mộc mạc, giản dị nhưng chứa đựng triết lý nhân sinh sâu sắc.",
+            "Nhã nhạc cung đình Huế là di sản văn hóa phi vật thể của nhân loại.",
+            "Cồng chiêng Tây Nguyên vang vọng núi rừng, là tiếng nói của tâm linh huyền bí.",
+            "Hát xoan Phú Thọ là làn điệu dân ca cổ, mang đậm giá trị văn hóa lịch sử.",
+            "Dân ca quan họ Bắc Ninh mượt mà, đằm thắm, thắm đượm nghĩa tình người Kinh Bắc.",
+            "Đờn ca tài tử Nam Bộ phóng khoáng, trữ tình, là món ăn tinh thần của người dân.",
+            "Múa rối nước là nghệ thuật độc đáo, chỉ có duy nhất ở Việt Nam.",
+            "Vịnh Hạ Long kỳ vĩ với hàng ngàn đảo đá vôi, là kỳ quan thiên nhiên thế giới.",
+            "Phong Nha Kẻ Bàng ẩn chứa những hang động tuyệt đẹp, bí ẩn và tráng lệ.",
+            "Tràng An Ninh Bình non nước hữu tình, được ví như Hạ Long trên cạn.",
+            "Phố cổ Hội An lung linh sắc đèn lồng, mang vẻ đẹp hoài cổ và lãng mạn.",
+            "Thánh địa Mỹ Sơn uy nghiêm, cổ kính, là dấu ấn của nền văn hóa Chăm Pa rực rỡ.",
+            "Hoàng thành Thăng Long là di tích lịch sử quan trọng, minh chứng cho ngàn năm văn hiến.",
+            "Thành nhà Hồ là công trình kiến trúc đá độc đáo, kiên cố và hùng vĩ.",
+            "Cao nguyên đá Đồng Văn hùng vĩ, hiểm trở, là công viên địa chất toàn cầu.",
+            "Mù Cang Chải mùa lúa chín vàng rực trên những thửa ruộng bậc thang đẹp ngỡ ngàng.",
+            "Đỉnh Fansipan nóc nhà Đông Dương, là điểm đến mơ ước của những người ưa khám phá.",
+            "Đảo Phú Quốc thiên đường nghỉ dưỡng với những bãi biển xanh cát trắng nắng vàng.",
+            "Côn Đảo hoang sơ và linh thiêng, là địa điểm du lịch lịch sử và tâm linh ý nghĩa.",
+            "Đà Lạt thành phố ngàn hoa mộng mơ, quanh năm khí hậu mát mẻ dễ chịu.",
+            "Sa Pa mờ sương huyền ảo, nơi gặp gỡ đất trời, bốn mùa mây phủ.",
+            "Tam Đảo ví như Đà Lạt của miền Bắc, là điểm tránh nóng lý tưởng mùa hè.",
+            "Biển Sầm Sơn sóng to gió lớn, là bãi tắm thu hút đông đảo du khách mỗi dịp hè về.",
+            "Cửa Lò nước trong xanh, cát trắng mịn, hải sản tươi ngon giá cả phải chăng.",
+            "Thiên Cầm biển đàn trời, vẻ đẹp hoang sơ và yên bình hiếm có.",
+            "Quy Nhơn thành phố thi ca, với đường bờ biển hình vầng trăng khuyết tuyệt đẹp.",
+            "Nha Trang hòn ngọc viễn đông, sở hữu những vịnh biển đẹp nhất thế giới.",
+            "Mũi Né thủ đô resort, nổi tiếng với những đồi cát bay thay đổi hình dáng mỗi ngày.",
+            "Vũng Tàu thành phố biển năng động, điểm đến cuối tuần quen thuộc của người Sài Gòn.",
+            "Cần Thơ gạo trắng nước trong, ai đi đến đó lòng không muốn về.",
+            "Chợ nổi Cái Răng tấp nập thuyền bè, là nét văn hóa đặc trưng của miền Tây sông nước.",
+            "Rừng tràm Trà Sư xanh mướt một màu, là nơi cư trú của nhiều loài chim nước.",
+            "Đất mũi Cà Mau cực nam tổ quốc, nơi con sông mắm đổ về biển đông.",
+            "Việt Nam quê hương tôi đẹp lắm, hãy một lần ghé thăm để cảm nhận và yêu thương.",
+        ];
+
+        const STORAGE_KEY = 'piperstudio_recordings';
+        const STORAGE_INDEX_KEY = 'piperstudio_currentIndex';
+        
+        let currentIndex = 0;
+        let recordings = [];
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let stream = null;
+        let isRecording = false;
+        let currentlyPlaying = null;
+        
+        // Convert blob to base64 for storage
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+        
+        // Convert base64 back to blob
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: mimeType });
+        }
+        
+        // Save recordings to localStorage
+        async function saveToLocalStorage() {
+            try {
+                const recordingsData = await Promise.all(recordings.map(async (rec) => ({
+                    fileName: rec.fileName,
+                    sentence: rec.sentence,
+                    sentenceIndex: rec.sentenceIndex,
+                    blobBase64: await blobToBase64(rec.blob)
+                })));
+                
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(recordingsData));
+                localStorage.setItem(STORAGE_INDEX_KEY, currentIndex.toString());
+                
+                // Show save indicator
+                const saveIndicator = document.getElementById('save-indicator');
+                saveIndicator.classList.add('show');
+                setTimeout(() => {
+                    saveIndicator.classList.remove('show');
+                }, 2000);
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+            }
+        }
+        
+        // Load recordings from localStorage
+        function loadFromLocalStorage() {
+            try {
+                const savedRecordings = localStorage.getItem(STORAGE_KEY);
+                const savedIndex = localStorage.getItem(STORAGE_INDEX_KEY);
+                
+                if (savedRecordings) {
+                    const recordingsData = JSON.parse(savedRecordings);
+                    recordings = recordingsData.map(rec => ({
+                        fileName: rec.fileName,
+                        sentence: rec.sentence,
+                        sentenceIndex: rec.sentenceIndex,
+                        blob: base64ToBlob(rec.blobBase64, 'audio/wav')
+                    }));
+                    
+                    if (recordings.length > 0) {
+                        updateRecordingsList();
+                        downloadBtn.disabled = false;
+                    }
+                }
+                
+                if (savedIndex !== null) {
+                    currentIndex = parseInt(savedIndex, 10);
+                    // Make sure we don't go beyond the sentences array
+                    if (currentIndex >= sentences.length) {
+                        currentIndex = sentences.length - 1;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading from localStorage:', error);
+            }
+        }
+        
+        // Clear localStorage (for testing/reset)
+        function clearLocalStorage() {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_INDEX_KEY);
+        }
+
+        const sentenceDisplay = document.getElementById('sentence-display');
+        const currentIndexSpan = document.getElementById('current-index');
+        const totalSentencesSpan = document.getElementById('total-sentences');
+        const recordBtn = document.getElementById('record-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const statusDiv = document.getElementById('status');
+        const recordingsList = document.getElementById('recordings-list');
+        const recordingsContainer = document.getElementById('recordings-container');
+
+        totalSentencesSpan.textContent = sentences.length;
+
+        function updateSentence() {
+            sentenceDisplay.textContent = sentences[currentIndex];
+            currentIndexSpan.textContent = currentIndex + 1;
+        }
+
+        function updateStatus(text, className) {
+            statusDiv.textContent = text;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function floatTo16BitPCM(output, offset, input) {
+            for (let i = 0; i < input.length; i++, offset += 2) {
+                let s = Math.max(-1, Math.min(1, input[i]));
+                output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            }
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        function encodeWAV(samples, sampleRate) {
+            let buffer = new ArrayBuffer(44 + samples.length * 2);
+            let view = new DataView(buffer);
+            
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + samples.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, samples.length * 2, true);
+            floatTo16BitPCM(view, 44, samples);
+            
+            return buffer;
+        }
+
+        async function startRecording() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                isRecording = true;
+                
+                // Use MediaRecorder API (modern, non-deprecated)
+                // Try to find a supported mime type
+                let options = {};
+                const mimeTypes = ['audio/webm', 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/wav'];
+                for (const mimeType of mimeTypes) {
+                    if (MediaRecorder.isTypeSupported(mimeType)) {
+                        options.mimeType = mimeType;
+                        break;
+                    }
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async function() {
+                    await processRecording();
+                };
+                
+                mediaRecorder.start();
+                
+                recordBtn.disabled = true;
+                recordBtn.classList.add('recording');
+                stopBtn.disabled = false;
+                nextBtn.disabled = true;
+                updateStatus('Recording...', 'recording');
+            } catch (error) {
+                alert('Error accessing microphone: ' + error.message);
+                updateStatus('Error accessing microphone', 'idle');
+                isRecording = false;
+            }
+        }
+        
+        async function processRecording() {
+            if (audioChunks.length === 0) {
+                updateStatus('No audio recorded', 'idle');
+                return;
+            }
+            
+            try {
+                // Convert MediaRecorder blob to WAV
+                const mimeType = mediaRecorder.mimeType || 'audio/webm';
+                const audioBlob = new Blob(audioChunks, { type: mimeType });
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Convert to WAV
+                const wavBuffer = encodeWAV(audioBuffer.getChannelData(0), audioBuffer.sampleRate);
+                const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+                
+                const audioFileName = `audio_${String(currentIndex + 1).padStart(3, '0')}.wav`;
+                const sentence = sentences[currentIndex];
+                
+                // Check if recording already exists for this sentence index
+                const existingIndex = recordings.findIndex(r => r.sentenceIndex === currentIndex);
+                if (existingIndex !== -1) {
+                    // Replace existing recording
+                    recordings[existingIndex] = {
+                        fileName: audioFileName,
+                        sentence: sentence,
+                        blob: wavBlob,
+                        sentenceIndex: currentIndex
+                    };
+                } else {
+                    // Add new recording
+                    recordings.push({
+                        fileName: audioFileName,
+                        sentence: sentence,
+                        blob: wavBlob,
+                        sentenceIndex: currentIndex
+                    });
+                }
+                
+                audioContext.close();
+                
+                recordBtn.disabled = false;
+                recordBtn.classList.remove('recording');
+                stopBtn.disabled = true;
+                nextBtn.disabled = false;
+                downloadBtn.disabled = false;
+                
+                updateStatus('Recording saved! Click "Next Sentence" to continue.', 'ready');
+                updateRecordingsList();
+                
+                // Save to localStorage
+                saveToLocalStorage();
+            } catch (error) {
+                console.error('Error processing recording:', error);
+                alert('Error processing recording: ' + error.message);
+                updateStatus('Error processing recording', 'idle');
+                recordBtn.disabled = false;
+                recordBtn.classList.remove('recording');
+                stopBtn.disabled = true;
+            }
+        }
+
+        function stopRecording() {
+            if (!mediaRecorder || !isRecording) return;
+            
+            isRecording = false;
+            mediaRecorder.stop();
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+
+        function nextSentence() {
+            if (currentIndex < sentences.length - 1) {
+                currentIndex++;
+                updateSentence();
+                nextBtn.disabled = true;
+                updateStatus('Ready to record', 'idle');
+                // Save current index to localStorage
+                saveToLocalStorage();
+            } else {
+                alert('All sentences completed! You can now download all recordings.');
+            }
+        }
+
+        function playRecording(recordingIndex) {
+            const rec = recordings[recordingIndex];
+            if (!rec) return;
+            
+            const playBtn = document.querySelector(`.play-btn[data-index="${recordingIndex}"]`);
+            
+            // If this is already playing, stop it
+            if (currentlyPlaying && currentlyPlaying.recordingIndex === recordingIndex) {
+                currentlyPlaying.audio.pause();
+                currentlyPlaying.audio.currentTime = 0;
+                if (playBtn) {
+                    playBtn.classList.remove('playing');
+                    playBtn.textContent = '▶ Play';
+                }
+                URL.revokeObjectURL(currentlyPlaying.audio.src);
+                currentlyPlaying = null;
+                return;
+            }
+            
+            // Stop currently playing audio if any
+            if (currentlyPlaying) {
+                currentlyPlaying.audio.pause();
+                currentlyPlaying.audio.currentTime = 0;
+                const prevBtn = document.querySelector(`.play-btn[data-index="${currentlyPlaying.recordingIndex}"]`);
+                if (prevBtn) {
+                    prevBtn.classList.remove('playing');
+                    prevBtn.textContent = '▶ Play';
+                }
+                URL.revokeObjectURL(currentlyPlaying.audio.src);
+            }
+            
+            // Create audio element and play
+            const audio = new Audio(URL.createObjectURL(rec.blob));
+            currentlyPlaying = { audio, recordingIndex };
+            
+            if (playBtn) {
+                playBtn.classList.add('playing');
+                playBtn.textContent = '⏸ Playing...';
+            }
+            
+            audio.onended = () => {
+                if (playBtn) {
+                    playBtn.classList.remove('playing');
+                    playBtn.textContent = '▶ Play';
+                }
+                URL.revokeObjectURL(audio.src);
+                currentlyPlaying = null;
+            };
+            
+            audio.onerror = () => {
+                if (playBtn) {
+                    playBtn.classList.remove('playing');
+                    playBtn.textContent = '▶ Play';
+                }
+                alert('Error playing audio');
+                currentlyPlaying = null;
+            };
+            
+            audio.play();
+        }
+        
+        function deleteRecording(recordingIndex) {
+            const rec = recordings[recordingIndex];
+            if (!rec) return;
+            
+            if (!confirm(`Delete recording for sentence ${rec.sentenceIndex + 1}? You can re-record it.`)) {
+                return;
+            }
+            
+            // Stop playing if this is the current audio
+            if (currentlyPlaying && currentlyPlaying.recordingIndex === recordingIndex) {
+                currentlyPlaying.audio.pause();
+                URL.revokeObjectURL(currentlyPlaying.audio.src);
+                currentlyPlaying = null;
+            }
+            
+            // Remove from recordings array
+            recordings.splice(recordingIndex, 1);
+            
+            // Navigate to that sentence for re-recording
+            currentIndex = rec.sentenceIndex;
+            updateSentence();
+            nextBtn.disabled = true;
+            updateStatus('Ready to re-record this sentence', 'idle');
+            
+            // Update the recordings list
+            updateRecordingsList();
+            
+            // Update download button state
+            downloadBtn.disabled = recordings.length === 0;
+            
+            // Save to localStorage
+            saveToLocalStorage();
+        }
+        
+        function updateRecordingsList() {
+            if (recordings.length > 0) {
+                recordingsList.style.display = 'block';
+                // Sort recordings by sentence index
+                const sortedRecordings = [...recordings].sort((a, b) => a.sentenceIndex - b.sentenceIndex);
+                recordingsContainer.innerHTML = sortedRecordings.map((rec, idx) => {
+                    const originalIndex = recordings.indexOf(rec);
+                    return `
+                    <div class="recording-item">
+                        <div class="recording-info">
+                            <div class="recording-name">${rec.fileName}</div>
+                            <div class="recording-sentence">Sentence ${rec.sentenceIndex + 1}: ${rec.sentence}</div>
+                        </div>
+                        <div class="recording-actions">
+                            <button class="action-btn play-btn" data-index="${originalIndex}" onclick="playRecording(${originalIndex})">▶ Play</button>
+                            <button class="action-btn delete-btn" data-index="${originalIndex}" onclick="deleteRecording(${originalIndex})">🗑 Delete</button>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            } else {
+                recordingsList.style.display = 'none';
+            }
+        }
+
+        function downloadFile(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function downloadAll() {
+            if (recordings.length === 0) {
+                alert('No recordings to download!');
+                return;
+            }
+
+            updateStatus('Creating download package...', 'idle');
+            downloadBtn.disabled = true;
+
+            try {
+                const zip = new JSZip();
+                
+                // Add all audio files to zip
+                recordings.forEach(rec => {
+                    zip.file(rec.fileName, rec.blob);
+                });
+
+                // Generate and add metadata.csv
+                const csvContent = recordings.map(rec => 
+                    `${rec.fileName}|${rec.sentence}`
+                ).join('\n');
+                zip.file('metadata.csv', csvContent);
+
+                // Generate zip file
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                downloadFile(zipBlob, 'piper_dataset.zip');
+                
+                updateStatus('Download complete!', 'ready');
+            } catch (error) {
+                alert('Error creating zip file: ' + error.message);
+                updateStatus('Error creating download', 'idle');
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        }
+
+        // Make functions globally accessible for onclick handlers
+        window.playRecording = playRecording;
+        window.deleteRecording = deleteRecording;
+
+        recordBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        nextBtn.addEventListener('click', nextSentence);
+        downloadBtn.addEventListener('click', downloadAll);
+
+        // Initialize - load from localStorage first
+        loadFromLocalStorage();
+        updateSentence();
+        
+        // Show message if data was loaded
+        if (recordings.length > 0) {
+            updateStatus(`Loaded ${recordings.length} previous recording(s). Continuing from sentence ${currentIndex + 1}.`, 'ready');
+            setTimeout(() => {
+                updateStatus('Ready to record', 'idle');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+
