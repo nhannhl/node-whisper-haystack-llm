@@ -47,6 +47,12 @@ docker compose up -d
   - Using Qdrant
   - Image qdrant/qdrant:latest for CPU
 
+- **TTS**
+  - Using piper-tts
+  - Model using "ngocngan"
+  - Can clone your voice using training with Colab source code (link in piper_dataset_recorder/README.md) and export (.onnx, .onnx.json)
+  - Record your voice using piper-recorder service
+
 ## DB
 
 - deleteAllPointsByDocument : delete all points by document name (db/delete-all-points/:name?)

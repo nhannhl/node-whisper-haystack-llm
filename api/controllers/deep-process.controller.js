@@ -6,6 +6,7 @@ import { filterTimeTranscript } from "../utils/common.util.js";
 import { processTranscriptToVectorDB } from "../services/transcript_faster_whisper_pipeline.service.js";
 import { processTranscriptXToVectorDB } from "../services/transcript_whisper_x_pipeline.js";
 import { callLlamaForSummerize } from "../services/llama.service.js";
+import { generateAudio } from "../services/tts.service.js";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 
@@ -49,8 +50,18 @@ export async function deepProcessHandler(req, res) {
 
         const summary = await callLlamaForSummerize(transcript?.text);
 
+        // Generate audio for summary
+        let audioPath = null;
+        try {
+            audioPath = await generateAudio(summary, `summary_${id}_${Date.now()}`);
+            console.log("[Pipeline] Audio generated:", audioPath);
+        } catch (e) {
+            console.error("[Pipeline] TTS error:", e.message);
+        }
+
         return res.json({
             summary,
+            audioPath: audioPath ? `/uploads/${path.basename(audioPath)}` : null,
             original_length: transcript?.segments?.length || 0,
             source: type,
             time_transcript: transcript.time_transcript,

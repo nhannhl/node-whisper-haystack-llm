@@ -95,6 +95,31 @@ services:
     networks:
       - app_net
 
+  # Piper TTS service
+  piper_tts:
+    build: ./piper_tts
+    container_name: piper_tts
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PIPER_MODEL=/models/vi.onnx
+      - PIPER_CONFIG=/models/vi.onnx.json
+    volumes:
+      - ./models/piper:/models
+    networks:
+      - app_net
+
+  # Piper Training Dataset Recorder
+  piper-recorder:
+    build: ./piper_dataset_recorder
+    container_name: piper-recorder
+    restart: unless-stopped
+    ports:
+      - "8888:80"
+    networks:
+      - app_net
+
   # API server
   api:
     build: ./api
@@ -104,11 +129,12 @@ services:
       - "3000:3000"
     depends_on:
       - llama
-      # - whisper
+      - whisper
       - vectordb
       - embeddings
-      # - faster-whisper
+      - faster-whisper
       - whisper-x
+      - piper_tts
     volumes:
       - ./api:/app
       - /app/node_modules

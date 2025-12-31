@@ -37,4 +37,18 @@ export function downloadSubtitleWithYtDlp(url, outputPath) {
   });
 }
 
+export function downloadWithYtDlpByQuanlity(url, outputPath, quality = 720) {
+  return new Promise((resolve, reject) => {
+    // Format: best video up to quality + best audio, fallback to best combined format
+    const formatSelector = `bestvideo[height<=${quality}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${quality}]+bestaudio/best[height<=${quality}]/best`;
+    const cmd = `yt-dlp -f "${formatSelector}" --merge-output-format mp4 --audio-multistreams -o "${outputPath}" "${url}"`;
+    console.log("Running:", cmd);
+
+    exec(cmd, { maxBuffer: 1024 * 1024 * 50 }, err => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
+}
+
 
